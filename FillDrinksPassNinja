@@ -1,0 +1,64 @@
+import requests
+
+def update_pass(pass_template_id, pass_id, client_pass_data):
+    url = "https://api.passninja.com/v1"
+    account_id = 'aid_0x4cd'
+    api_key = '747fc873c3a8645517485a004c521b1a'
+    headers = {
+        'user-agent': 'PassNinja python client',
+        'content-type': 'application/json',
+        'x-account-id': account_id,
+        'x-api-key': api_key,
+    }
+
+    # Corrected URL construction using f-string for proper formatting
+    response = requests.put(
+        f'{url}/passes/{pass_template_id}/{pass_id}',  # Corrected URL format
+        headers=headers,
+        json={
+            'passType': pass_template_id,
+            'pass': client_pass_data,
+        }
+    )
+
+    response.raise_for_status()
+    return response.json()
+
+def main(input_data):
+    # Shared pass data
+    client_pass_data = {
+        "status": input_data.get("my_status", "no status"),
+        "subscription_type": input_data.get("subscription_type", "no plan"),
+        "full_name": input_data.get("full_name", "no name"),
+        "customer_id": input_data.get("customer_id", "no id"),
+        "email": input_data.get("email", "info@filldrinks.com"),
+        "nfc-message": ""  # Empties NFC message to disable further drinks
+    }
+
+    # For Apple iPhone
+    pass_template_id = "ptk_0xfc"
+    iphone_pass_data = update_pass(pass_template_id, input_data.get("pass_id"), client_pass_data)
+
+    # For Google Android
+    pass_template_id = "ptk_0xff"
+    android_pass_data = update_pass(pass_template_id, input_data.get("pass_id"), client_pass_data)
+
+    return {
+        "apple": iphone_pass_data['urls']['landing'],
+        "apple_id": iphone_pass_data['id'],
+        "google": android_pass_data['urls']['landing'],
+        "google_id": android_pass_data['id']
+    }
+
+# # Example usage
+input_data = {
+    "my_status": "active",
+    "subscription_type": "premium",
+    "full_name": "John Doe",
+    "customer_id": "123456",
+    "email": "john.doe@example.com",
+    "pass_id": "ptk_0xfc"
+}
+
+result = main(input_data)
+print(result)
